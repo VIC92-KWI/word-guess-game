@@ -1,0 +1,24 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 24px;
+  font-family: system-ui, sans-serif;
+  text-align: center;
+}
+
+#board {
+  /* ຈັດວາງກາດເປັນຕາລາງ */
+  display: grid;
+  gap: 12px;
+  max-width: 480px;
+  margin: 24px auto;
+}
+
+#restart {
+  padding: 8px 16px;
+  font-size: 1rem;
+  cursor: pointer;
+}

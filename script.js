@@ -15,7 +15,13 @@ const statusText = document.getElementById("status");
 const restartButton = document.getElementById("restart");
 
 const MAX_PAIRS = 6; // ຈຳນວນຄູສູງສຸດຕໍ່ເກມ
+// ตัวแปรของเกมจับคู่
 let currentCategory = null;
+let selectedCard = null;
+let matchedPairs = 0;
+let totalPairs = 0;
+let locked = false;
+let wrongTimer = null;
 
 // ສະແດງຫນ້າທີ່ຕ້ອງການ
 function showView(name) {
@@ -70,52 +76,120 @@ function openCategory(category) {
   showView("study");
 }
 
-// สร้างการ์ดหนึ่งใบ (เก็บเลขคู่ไว้ใน data-pair เพื่อใช้ตรวจตอนขั้นที่ 4)
-function createCard(text, pairId) {
-  const card = document.createElement("button");
-  card.className = "card";
-  card.type = "button";
-  card.dataset.pair = pairId;
-  card.textContent = text;
-  return card;
-}
-
 // หน้าที่ 3: เริ่มเกมด้วยคำในหมวดที่เลือก
 function startGame() {
-  boardoard.innerHTML = "";
+  board.innerHTML = "";
   statusText.textContent = "ຕຽມພ້ອມ";
 
   const pairs = Math.min(MAX_PAIRS, currentCategory.words.length);
   const chosen = shuffle(currentCategory.words).slice(0, pairs);
-  const cards = [];
-
-   chosen.forEach((word, index) => {
-     cards.push({ text: word.korean, pair: index });
-    cards.push({ text: word.meaning, pair: index });
-   });
-
-   shuffle(cards).forEach((c) => {
-    board.appendChild(createCard(c.text, c.pair));
-   });
 }
 
-// ปุ่มต่าง ๆ
+// side คือ "korean" (คอลัมน์ซ้าย) หรือ "meaning" (คอลัมน์ขวา)
+// pairId คือเลขคู่ — การ์ดสองใบที่เป็นคู่กันจะมี pairId เหมือนกัน
+function createCard(text, pairId, side) {
+  const card = document.createElement("button");
+  card.className = "card";
+  card.type = "button";
+  card.dataset.pair = pairId;
+  card.dataset.side = side;
+  card.textContent = text;
+  return card;
+}
+
+// อัปเดตข้อความสถานะ
+function updateStatus() {
+  if (matchedPairs === totalPairs) {
+    statusText.textContent = "ເກັ່ງຫຼາຍ! ຈັບຄູ່ຄົບແລ້ວ";
+  } else {
+    statusText.textContent = `ຈັບຄູ່ແລ້ວ ${matchedPairs}/${totalPairs}`;
+  }
+}
+
+// เริ่มเกม: คอลัมน์ซ้าย = คำเกาหลี, คอลัมน์ขวา = ความหมาย
+function startGame() {
+  clearTimeout(wrongTimer);
+  board.innerHTML = "";
+  selectedCard = null;
+  locked = false;
+  matchedPairs = 0;
+
+  const pairs = Math.min(MAX_PAIRS, currentCategory.words.length);
+  const chosen = shuffle(currentCategory.words).slice(0, pairs);
+  totalPairs = chosen.length;
+
+  const koreanCards = shuffle(chosen.map((w, i) => createCard(w.korean, i, "korean")));
+  const meaningCards = shuffle(chosen.map((w, i) => createCard(w.meaning, i, "meaning")));
+
+  // วางทีละแถว: ซ้าย (เกาหลี) แล้วขวา (ความหมาย)
+  for (let i = 0; i < totalPairs; i++) {
+    board.appendChild(koreanCards[i]);
+    board.appendChild(meaningCards[i]);
+  }
+  updateStatus();
+}
+
+// จัดการตอนกดการ์ด
+function handleCardClick(card) {
+  // กดใบเดิมซ้ำ = ยกเลิกการเลือก
+  if (card === selectedCard) {
+    card.classList.remove("selected");
+    selectedCard = null;
+    return;
+  }
+
+  // ยังไม่ได้เลือกใบไหน = เลือกใบนี้ไว้
+  if (!selectedCard) {
+     card.classList.add("selected");
+    selectedCard = card;
+    return;
+  }
+  
+  // กดฝั่งเดียวกับที่เลือกไว้ = เปลี่ยนไปเลือกใบใหม่
+  if (card.dataset.side === selectedCard.dataset.side) {
+    selectedCard.classList.remove("selected");
+    card.classList.add("selected");
+    selectedCard = card;
+    return;
+  }
+  // กดคนละฝั่ง = ตรวจว่าเป็นคู่กันไหม
+  if (card.dataset.pair === selectedCard.dataset.pair) {
+    [card, selectedCard].forEach((c) => {
+      c.classList.remove("selected");
+      c.classList.add("matched");
+      c.disabled = true;
+    });
+    selectedCard = null;
+    matchedPairs++;
+    updateStatus();
+  } else {
+    const first = selectedCard;
+    locked = true;
+    first.classList.add("wrong");
+    card.classList.add("wrong");
+    wrongTimer = setTimeout(() => {
+      first.classList.remove("wrong", "selected");
+      card.classList.remove("wrong");
+      selectedCard = null;
+      locked = false;
+    }, 600);
+  }
+}
+
+// ฟังการกดที่กระดาน (ตัวเดียวดูแลการ์ดทุกใบ)
+board.addEventListener("click", (event) => {
+  const card = event.target.closest(".card");
+  if (!card || locked || card.disabled) return;
+  handleCardClick(card);
+});
+// ປຸ່ມຕ່າງໆ
 document.getElementById("back-to-menu").addEventListener("click", () => showView("menu"));
 document.getElementById("back-to-study").addEventListener("click", () => showView("study"));
 document.getElementById("start-game").addEventListener("click", () => {
-  startGame();
+    startGame();
   showView("game");
 });
 document.getElementById("restart").addEventListener("click", startGame);
 
 renderMenu();
 showView("menu");
-
-function startGame() {
-  statusText.textContent = "ຕຽມພ້ອມ";
-  console.log("ໂຫລດຄຳສັບແລ້ວ:", words.length, "ຄຳ");
-}
-
-restartButton.addEventListener("click", startGame);
-
-startGame();

@@ -13,18 +13,51 @@ body {
 /* ຈັດວາງກາດເປັນຕາລາງ */
 #board {
   display: grid;
-  gap: 12px;
-  max-width: 480px;
+  gap: 14px 40px;
+  max-width: 420px;
   margin: 24px auto;
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .card {
-  padding: 20px 8px;
-  font-size: 1.1rem;
-  border: 2px solid #ccc;
-  border-radius: 10px;
-  background: #fff;
+  padding: 18px 8px;
+  font-size: 1.2rem;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  background: #3a8a1c;
   cursor: pointer;
+  transition: transform 0.1s, filter 0.1s;
+}
+
+.card:hover {
+  filter: brightness(1.12);
+}
+
+/* การ์ดที่กดเลือกไว้ */
+.card.selected {
+  outline: 3px solid #222;
+  outline-offset: 2px;
+  transform: scale(1.04);
+}
+
+/* จับคู่ถูกแล้ว */
+.card.matched {
+  opacity: 0.35;
+  cursor: default;
+  filter: none;
+}
+
+/* เลือกผิด */
+.card.wrong {
+  background: #d9534f;
+  animation: shake 0.4s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
 #restart {

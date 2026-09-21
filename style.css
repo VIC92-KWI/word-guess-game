@@ -1,3 +1,4 @@
+/* ສະຕາຍເວັບ */
 * {
   box-sizing: border-box;
 }
@@ -9,16 +10,71 @@ body {
   text-align: center;
 }
 
+/* ຈັດວາງກາດເປັນຕາລາງ */
 #board {
-  /* ຈັດວາງກາດເປັນຕາລາງ */
   display: grid;
   gap: 12px;
   max-width: 480px;
   margin: 24px auto;
 }
 
+.card {
+  padding: 20px 8px;
+  font-size: 1.1rem;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
 #restart {
   padding: 8px 16px;
   font-size: 1rem;
   cursor: pointer;
+}
+
+/* ปุ่มเลือกหมวด */
+#category-list {
+  display: grid;
+  gap: 12px;
+  max-width: 320px;
+  margin: 16px auto;
+}
+
+.category-button {
+  padding: 16px;
+  font-size: 1.1rem;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.category-button:hover {
+  border-color: #666;
+}
+
+/* รายการคำศัพท์ */
+#word-list {
+  list-style: none;
+  max-width: 360px;
+  margin: 16px auto;
+  padding: 0;
+}
+
+#word-list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 4px;
+  border-bottom: 1px solid #ddd;
+}
+
+.word-korean {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+/* ทำให้หน้าที่ซ่อนอยู่ไม่แสดงแน่นอน */
+[hidden] {
+  display: none !important;
 }

@@ -8,15 +8,27 @@
 </head>
 <body>
   <header>
-    <h1>ເກມຈັບຄູຄຳສັບເກົາຫລີ</h1>
-    <p id="status">ຕຽມພ້ອມ</p>
+    <h1>ເກມຄຳສັບເກົາຫລີ</h1>
   </header>
 
-  <main id="board">
-    <!-- ກາດຈະຖືກສ້າງດ້ວຍ JavaScript -->
-  </main>
+  <section id="menu-view">
+    <h2>ເລືອກໝວດຄຳສັບ</h2>
+    <div id="category-list"></div>
+  </section>
 
-  <button id="restart" type="button">ຫລິ້ນໃຫມ່</button>
+  <section id="study-view" hidden>
+    <button id="back-to-menu" type="button">← ກັບຄືນ</button>
+    <h2 id="category-title"></h2>
+    <ul id="word-list"></ul>
+    <button id="start-game" type="button">ຫຼິ້ນເກມຈັບຄູ່</button>
+  </section>
+
+  <section id="game-view" hidden>
+    <button id="back-to-study" type="button">← ກັບຄືນ</button>
+    <p id="status">ຕຽມພ້ອມ</p>
+    <main id="board"></main>
+    <button id="restart" type="button">ຫລິ້ນໃຫມ່</button>
+  </section>
 
   <!-- words.js ຕ້ອງໂຫລດກ່ອນ script.js -->
   <script src="words.js"></script>

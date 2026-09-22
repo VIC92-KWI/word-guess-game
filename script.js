@@ -6,6 +6,7 @@ const views = {
   study: document.getElementById("study-view"),
   game: document.getElementById("game-view"),
   result: document.getElementById("result-view"),
+  gameover: document.getElementById("gameover-view"),
 };
 
 const categoryList = document.getElementById("category-list");
@@ -19,6 +20,7 @@ const restartButton = document.getElementById("restart");
 
 const MAX_PAIRS = 6; // ຈຳນວນຄູສູງສຸດຕໍ່ເກມ
 const START_SCORE = 100; // คะแนนเริ่มต้น
+let WRONG_PENALTY = 0; // จะคำนวณใหม่ทุกครั้งที่เริ่มเกม ขึ้นกับจำนวนคู่
 
 // ตัวแปรของเกมจับคู่
 let currentCategory = null;
@@ -118,6 +120,7 @@ function startGame() {
   const pairs = Math.min(MAX_PAIRS, currentCategory.words.length);
   const chosen = shuffle(currentCategory.words).slice(0, pairs);
   totalPairs = chosen.length;
+  WRONG_PENALTY = Math.round(START_SCORE / totalPairs);
 
   const koreanCards = shuffle(chosen.map((w, i) => createCard(w.korean, i, "korean")));
   const meaningCards = shuffle(chosen.map((w, i) => createCard(w.meaning, i, "meaning")));
@@ -173,9 +176,12 @@ function handleCardClick(card) {
       card.classList.remove("wrong");
       selectedCard = null;
       locked = false;
-      score = 0;
+      score = Math.max(0, score - WRONG_PENALTY);
       updateStatus();
     }, 600);
+    if (score === 0 && matchedPairs < totalPairs) {
+      showView("gameover");
+    }
   }
 }
 
@@ -198,7 +204,11 @@ document.getElementById("play-again").addEventListener("click", () => {
   startGame();
   showView("game");
 });
-
+document.getElementById("back-to-menu-from-gameover").addEventListener("click", () => showView("menu"));
+document.getElementById("try-again").addEventListener("click", () => {
+  startGame();
+  showView("game");
+});
 
 renderMenu();
 showView("menu");

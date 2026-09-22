@@ -5,16 +5,21 @@ const views = {
   menu: document.getElementById("menu-view"),
   study: document.getElementById("study-view"),
   game: document.getElementById("game-view"),
+  result: document.getElementById("result-view"),
 };
 
 const categoryList = document.getElementById("category-list");
 const categoryTitle = document.getElementById("category-title");
+const scoreText = document.getElementById("score");
+const finalScoreText = document.getElementById("final-score");
 const wordList = document.getElementById("word-list");
 const board = document.getElementById("board");
 const statusText = document.getElementById("status");
 const restartButton = document.getElementById("restart");
 
 const MAX_PAIRS = 6; // ຈຳນວນຄູສູງສຸດຕໍ່ເກມ
+const START_SCORE = 100; // คะแนนเริ่มต้น
+
 // ตัวแปรของเกมจับคู่
 let currentCategory = null;
 let selectedCard = null;
@@ -22,6 +27,7 @@ let matchedPairs = 0;
 let totalPairs = 0;
 let locked = false;
 let wrongTimer = null;
+let score = START_SCORE;
 
 // ສະແດງຫນ້າທີ່ຕ້ອງການ
 function showView(name) {
@@ -76,15 +82,6 @@ function openCategory(category) {
   showView("study");
 }
 
-// หน้าที่ 3: เริ่มเกมด้วยคำในหมวดที่เลือก
-function startGame() {
-  board.innerHTML = "";
-  statusText.textContent = "ຕຽມພ້ອມ";
-
-  const pairs = Math.min(MAX_PAIRS, currentCategory.words.length);
-  const chosen = shuffle(currentCategory.words).slice(0, pairs);
-}
-
 // side คือ "korean" (คอลัมน์ซ้าย) หรือ "meaning" (คอลัมน์ขวา)
 // pairId คือเลขคู่ — การ์ดสองใบที่เป็นคู่กันจะมี pairId เหมือนกัน
 function createCard(text, pairId, side) {
@@ -97,13 +94,16 @@ function createCard(text, pairId, side) {
   return card;
 }
 
-// อัปเดตข้อความสถานะ
+//  ອັປເດດຂໍ້ຄວາມສະຖານະ
 function updateStatus() {
   if (matchedPairs === totalPairs) {
     statusText.textContent = "ເກັ່ງຫຼາຍ! ຈັບຄູ່ຄົບແລ້ວ";
+    finalScoreText.textContent = `ຄະແນນ: ${score}/${START_SCORE}`;
+    showView("result");
   } else {
     statusText.textContent = `ຈັບຄູ່ແລ້ວ ${matchedPairs}/${totalPairs}`;
   }
+  scoreText.textContent = `ຄະແນນ: ${score}/${START_SCORE}`;
 }
 
 // เริ่มเกม: คอลัมน์ซ้าย = คำเกาหลี, คอลัมน์ขวา = ความหมาย
@@ -113,6 +113,7 @@ function startGame() {
   selectedCard = null;
   locked = false;
   matchedPairs = 0;
+  score = START_SCORE;
 
   const pairs = Math.min(MAX_PAIRS, currentCategory.words.length);
   const chosen = shuffle(currentCategory.words).slice(0, pairs);
@@ -172,6 +173,8 @@ function handleCardClick(card) {
       card.classList.remove("wrong");
       selectedCard = null;
       locked = false;
+      score = 0;
+      updateStatus();
     }, 600);
   }
 }
@@ -189,7 +192,13 @@ document.getElementById("start-game").addEventListener("click", () => {
     startGame();
   showView("game");
 });
+document.getElementById("back-to-result").addEventListener("click", () => showView("menu"));
 document.getElementById("restart").addEventListener("click", startGame);
+document.getElementById("play-again").addEventListener("click", () => {
+  startGame();
+  showView("game");
+});
+
 
 renderMenu();
 showView("menu");

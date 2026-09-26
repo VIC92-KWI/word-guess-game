@@ -17,8 +17,9 @@ const wordList = document.getElementById("word-list");
 const board = document.getElementById("board");
 const statusText = document.getElementById("status");
 const restartButton = document.getElementById("restart");
+const categoryPools = new Map();
 
-const MAX_PAIRS = 6; // ຈຳນວນຄູສູງສຸດຕໍ່ເກມ
+const MAX_PAIRS = 4; // ຈຳນວນຄູສູງສຸດຕໍ່ເກມ
 const START_SCORE = 100; // คะแนนเริ่มต้น
 let WRONG_PENALTY = 0; // จะคำนวณใหม่ทุกครั้งที่เริ่มเกม ขึ้นกับจำนวนคู่
 
@@ -30,6 +31,9 @@ let totalPairs = 0;
 let locked = false;
 let wrongTimer = null;
 let score = START_SCORE;
+let overallMatched = 0;
+let totalWords = 0;
+let sessionQueue = [];
 
 // ສະແດງຫນ້າທີ່ຕ້ອງການ
 function showView(name) {
@@ -96,14 +100,34 @@ function createCard(text, pairId, side) {
   return card;
 }
 
+function loadNextBatch() {
+    board.innerHTML = "";
+    matchedPairs = 0;
+
+    const chosen = sessionQueue.splice(0, Math.min(MAX_PAIRS, sessionQueue.length));
+    totalPairs = chosen.length;
+    WRONG_PENALTY = Math.round(START_SCORE / totalWords);
+
+    const koreanCards = shuffle(chosen.map((w, i) => createCard(w.korean, i, "korean")));
+    const meaningCards = shuffle(chosen.map((w, i) => createCard(w.meaning, i, "meaning")));
+
+    for (let i = 0; i < totalPairs; i++) {
+      board.appendChild(koreanCards[i]);
+      board.appendChild(meaningCards[i]);
+    }
+  }
+
 //  ອັປເດດຂໍ້ຄວາມສະຖານະ
 function updateStatus() {
-  if (matchedPairs === totalPairs) {
+  if (overallMatched === totalWords) {
     statusText.textContent = "ເກັ່ງຫຼາຍ! ຈັບຄູ່ຄົບແລ້ວ";
     finalScoreText.textContent = `ຄະແນນ: ${score}/${START_SCORE}`;
     showView("result");
+  } else if (matchedPairs === totalPairs) {
+    loadNextBatch();
+    statusText.textContent = `ຈັບຄູ່ແລ້ວ ${overallMatched}/${totalPairs}`;
   } else {
-    statusText.textContent = `ຈັບຄູ່ແລ້ວ ${matchedPairs}/${totalPairs}`;
+    statusText.textContent = `ຈັບຄູ່ແລ້ວ ${overallMatched}/${totalWords}`;
   }
   scoreText.textContent = `ຄະແນນ: ${score}/${START_SCORE}`;
 }
@@ -114,22 +138,13 @@ function startGame() {
   board.innerHTML = "";
   selectedCard = null;
   locked = false;
-  matchedPairs = 0;
+  overallMatched = 0;
   score = START_SCORE;
 
-  const pairs = Math.min(MAX_PAIRS, currentCategory.words.length);
-  const chosen = shuffle(currentCategory.words).slice(0, pairs);
-  totalPairs = chosen.length;
-  WRONG_PENALTY = Math.round(START_SCORE / totalPairs);
+  sessionQueue = shuffle(currentCategory.words);
+  totalWords = sessionQueue.length;
 
-  const koreanCards = shuffle(chosen.map((w, i) => createCard(w.korean, i, "korean")));
-  const meaningCards = shuffle(chosen.map((w, i) => createCard(w.meaning, i, "meaning")));
-
-  // วางทีละแถว: ซ้าย (เกาหลี) แล้วขวา (ความหมาย)
-  for (let i = 0; i < totalPairs; i++) {
-    board.appendChild(koreanCards[i]);
-    board.appendChild(meaningCards[i]);
-  }
+  loadNextBatch();
   updateStatus();
 }
 
@@ -165,6 +180,7 @@ function handleCardClick(card) {
     });
     selectedCard = null;
     matchedPairs++;
+    overallMatched++;
     updateStatus();
   } else {
     const first = selectedCard;
@@ -178,10 +194,10 @@ function handleCardClick(card) {
       locked = false;
       score = Math.max(0, score - WRONG_PENALTY);
       updateStatus();
+      if (score === 0 && matchedPairs < totalPairs) {
+        showView("gameover");
+      }
     }, 600);
-    if (score === 0 && matchedPairs < totalPairs) {
-      showView("gameover");
-    }
   }
 }
 
@@ -191,6 +207,21 @@ board.addEventListener("click", (event) => {
   if (!card || locked || card.disabled) return;
   handleCardClick(card);
 });
+
+// เก็บคำที่ยังไม่ได้ใช้ของแต่ละหมวด
+function getRoundWords(category) {
+  const need = Math.min(MAX_PAIRS, category.words.length);
+  let pool = categoryPools.get(category) || [];
+
+  // ถ้าคำในถุงเหลือไม่พอ เติมคำชุดใหม่ (สุ่มลำดับใหม่) เข้าไป
+  while (pool.length < need) {
+    pool = pool.concat(shuffle(category.words));
+  }
+
+  const chosen = pool.slice(0, need);
+  categoryPools.set(category, pool.slice(need)); // เก็บส่วนที่เหลือไว้ใช้รอบถัดไป
+  return chosen;
+}
 // ປຸ່ມຕ່າງໆ
 document.getElementById("back-to-menu").addEventListener("click", () => showView("menu"));
 document.getElementById("back-to-study").addEventListener("click", () => showView("study"));
@@ -198,7 +229,7 @@ document.getElementById("start-game").addEventListener("click", () => {
     startGame();
   showView("game");
 });
-document.getElementById("back-to-result").addEventListener("click", () => showView("menu"));
+document.getElementById("back-to-form-result").addEventListener("click", () => showView("menu"));
 document.getElementById("restart").addEventListener("click", startGame);
 document.getElementById("play-again").addEventListener("click", () => {
   startGame();

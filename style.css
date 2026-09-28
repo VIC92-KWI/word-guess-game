@@ -111,3 +111,44 @@ body {
 [hidden] {
   display: none !important;
 }
+
+/*  ເກມທີ2 */
+#answer-slots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.answer-slot {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  border: 2px solid #999;
+  border-radius: 8px;
+  font-size: 1.3rem;
+}
+
+#letter-tiles {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+
+.letter-tile {
+  padding: 10px 14px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 8px;
+  background: #3a8a1c;
+  color: #fff;
+  cursor: pointer;
+}
+
+.letter-tile.used {
+  opacity: 0.3;
+  cursor: default;
+}

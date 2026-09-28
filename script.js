@@ -7,6 +7,7 @@ const views = {
   game: document.getElementById("game-view"),
   result: document.getElementById("result-view"),
   gameover: document.getElementById("gameover-view"),
+  scramble: document.getElementById("scramble-view"),
 };
 
 const categoryList = document.getElementById("category-list");
@@ -16,6 +17,11 @@ const finalScoreText = document.getElementById("final-score");
 const wordList = document.getElementById("word-list");
 const board = document.getElementById("board");
 const statusText = document.getElementById("status");
+const scrambleStatus = document.getElementById("scramble-status");
+const scrambleMeaning = document.getElementById("scramble-meaning");
+const answerSlots = document.getElementById("answer-slots");
+const letterTiles = document.getElementById("letter-tiles");
+const confirmAnswer = document.getElementById("confirm-answer");
 const restartButton = document.getElementById("restart");
 const categoryPools = new Map();
 
@@ -34,6 +40,9 @@ let score = START_SCORE;
 let overallMatched = 0;
 let totalWords = 0;
 let sessionQueue = [];
+let currentWord = null;
+let playerAnswer = [];
+let usedTiles = [];
 
 // ສະແດງຫນ້າທີ່ຕ້ອງການ
 function showView(name) {
@@ -132,6 +141,97 @@ function updateStatus() {
   scoreText.textContent = `ຄະແນນ: ${score}/${START_SCORE}`;
 }
 
+function startScramble() {
+  currentWord = shuffle(currentCategory.words)[0];
+  playerAnswer = [];
+}
+
+function renderScramble() {
+  scrambleMeaning.textContent = currentWord.meaning;
+  scrambleStatus.textContent = "ຕຽມພ້ອມ";
+  answerSlots.innerHTML = "";
+  letterTiles.innerHTML = "";
+  usedTiles = [];
+
+  const letters = currentWord.korean.split("");
+
+  letters.forEach(() => {
+    const slot = document.createElement("span");
+    slot.className = "answer-slot";
+    answerSlots.appendChild(slot);
+  });
+
+  shuffle(letters).forEach((letter) => {
+    const tile = document.createElement("button");
+    tile.type = "button";
+    tile.className = "letter-tile";
+    tile.textContent = letter;
+    letterTiles.appendChild(tile);
+  });
+}
+
+function updateAnswerSlots() {
+  const slots = answerSlots.querySelectorAll(".answer-slot");
+  slots.forEach((slot, i) => {
+    slot.textContent = playerAnswer[i] || "";
+  });
+}
+
+function handleTileClick(tile) {
+  if (tile.disabled) return;
+  if (playerAnswer.length >= currentWord.korean.length) return;
+  playerAnswer.push(tile.textContent);
+  usedTiles.push(tile);
+  tile.disabled = true;
+  tile.classList.add("used");
+  updateAnswerSlots();
+}
+
+function handleSlotClick(index) {
+  if (index !== playerAnswer.length - 1) return; // ยกเลิกได้แค่ตัวล่าสุด
+  const tile = usedTiles.pop();
+  playerAnswer.pop();
+  tile.disabled = false;
+  tile.classList.remove("used");
+  updateAnswerSlots();
+}
+
+letterTiles.addEventListener("click", (event) => {
+  const tile = event.target.closest(".letter-tile");
+  if (tile) handleTileClick(tile);
+});
+
+answerSlots.addEventListener("click", (event) => {
+  const slot = event.target.closest(".answer-slot");
+  if (!slot) return;
+  const slots = [...answerSlots.querySelectorAll(".answer-slot")];
+  handleSlotClick(slots.indexOf(slot));
+});
+
+confirmAnswer.addEventListener("click", () => {
+  if (playerAnswer.length !== currentWord.korean.length) {
+    scrambleStatus.textContent = "ຕື່ມໃຫ້ຄົບກ່ອນ";
+    return;
+  }
+
+  if (playerAnswer.join("") === currentWord.korean) {
+    scrambleStatus.textContent = "ຖືກຕ້ອງ!";
+    setTimeout(() => {
+      startScramble();
+      renderScramble();
+    }, 800);
+  } else {
+    scrambleStatus.textContent = "ຜິດ ລອງໃຫມ່";
+    usedTiles.forEach((tile) => {
+      tile.disabled = false;
+      tile.classList.remove("used");
+    });
+    usedTiles = [];
+    playerAnswer = [];
+    updateAnswerSlots();
+  }
+});
+
 // เริ่มเกม: คอลัมน์ซ้าย = คำเกาหลี, คอลัมน์ขวา = ความหมาย
 function startGame() {
   clearTimeout(wrongTimer);
@@ -229,6 +329,12 @@ document.getElementById("start-game").addEventListener("click", () => {
     startGame();
   showView("game");
 });
+document.getElementById("start-scramble").addEventListener("click", () => {
+  startScramble();
+  renderScramble();
+  showView("scramble");
+});
+document.getElementById("back-to-study-scramble").addEventListener("click", () => showView("study"));
 document.getElementById("back-to-form-result").addEventListener("click", () => showView("menu"));
 document.getElementById("restart").addEventListener("click", startGame);
 document.getElementById("play-again").addEventListener("click", () => {
